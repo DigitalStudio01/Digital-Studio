@@ -1,11 +1,17 @@
+import os
 import discord
 from discord.ext import commands
 import asyncio
-import os
 
-from order import OrderBot        # Contains /order and /status
-from help import HelpReport       # Contains /help
-from keep_alive import keep_alive  # Added this line
+from order import OrderBot       # /order and /status slash commands
+from help import HelpReport      # /help slash command
+
+# If you're using keep_alive (like with Replit or UptimeRobot)
+try:
+    from keep_alive import keep_alive
+    use_keep_alive = True
+except ImportError:
+    use_keep_alive = False
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -17,22 +23,29 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"Bot is ready. Logged in as {bot.user}")
     try:
+        # Global slash command sync
         synced = await bot.tree.sync()
         print(f"Globally synced {len(synced)} command(s)")
 
-        guild = discord.Object(id=1371360669340930138)
-        synced_guild = await bot.tree.sync(guild=guild)
-        print(f"Synced {len(synced_guild)} command(s) to guild {guild.id}")
+        # Optional: Guild-specific sync for faster command updates
+        guild_id = os.getenv("GUILD_ID")
+        if guild_id:
+            guild = discord.Object(id=int(guild_id))
+            synced_guild = await bot.tree.sync(guild=guild)
+            print(f"Synced {len(synced_guild)} command(s) to guild {guild.id}")
     except Exception as e:
-        print(f"Failed to sync commands: {e}")
+        print(f"[!] Failed to sync commands: {e}")
 
 async def setup_bot():
-    await bot.add_cog(OrderBot(bot))     # /order and /status are inside this cog
-    await bot.add_cog(HelpReport(bot))   # /help command
+    await bot.add_cog(OrderBot(bot))
+    await bot.add_cog(HelpReport(bot))
 
 async def main():
-    keep_alive()  # Keeps the bot alive 24/7
+    if use_keep_alive:
+        keep_alive()
+
     await setup_bot()
     await bot.start(os.environ["TOKEN"])
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
