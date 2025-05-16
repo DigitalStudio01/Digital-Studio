@@ -24,4 +24,4 @@ bot.add_cog(Utility(bot))
 bot.add_cog(Order(bot))
 bot.add_cog(Help(bot))
 
-bot.run("YOUR_BOT_TOKEN")
+bot.run(os.environ["TOKEN"])
